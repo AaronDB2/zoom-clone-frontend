@@ -111,7 +111,7 @@ export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
       connUserSocketId: connUserSocketId,
     };
 
-    wss.signalPeerData();
+    wss.signalPeerData(signalData);
   });
 
   // Peer is listening for incoming stream

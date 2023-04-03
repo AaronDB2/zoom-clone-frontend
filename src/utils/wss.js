@@ -47,7 +47,8 @@ export const connectWithSocketIOServer = () => {
 
   // Listen for event that initialize connection between peers
   socket.on("conn-init", (data) => {
-    webRTCHandler.prepareNewPeerConnection(data, true);
+    const { connUserSocketId } = data;
+    webRTCHandler.prepareNewPeerConnection(connUserSocketId, true);
   });
 };
 
