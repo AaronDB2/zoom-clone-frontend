@@ -3,9 +3,13 @@ import store from "../store/store";
 import * as wss from "./wss";
 import Peer from "simple-peer";
 
+// Set Constraints
 const defaultConstraints = {
   audio: true,
-  video: true,
+  video: {
+    with: "480",
+    height: "360",
+  },
 };
 
 var localStream;
@@ -69,6 +73,15 @@ const addStream = (stream, connUserSocketId) => {
     videoElement.play();
   };
 
+  // Click event for fullscreen video element
+  videoElement.addEventListener("click", () => {
+    if (videoElement.classList.contains("full_screen")) {
+      videoElement.classList.remove("full_screen");
+    } else {
+      videoElement.classList.add("full_screen");
+    }
+  });
+
   videoContainer.appendChild(videoElement);
   videosContainer.appendChild(videoContainer);
 };
@@ -121,4 +134,30 @@ export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
     addStream(stream, connUserSocketId);
     streams = [...streams, stream];
   });
+};
+
+// Function for disconnecting the peer connection
+export const removePeerConnection = (data) => {
+  const { socketId } = data;
+  const videoContainer = document.getElementById(socketId);
+  const videoEl = document.getElementById(`${socketId}-video`);
+
+  if (videoContainer && videoEl) {
+    const tracks = videoEl.srcObject.getTracks();
+
+    // Stop the video and audio tracks
+    tracks.forEach((t) => tracks.stop());
+
+    videoEl.srcObject = null;
+    videoContainer.removeChild(videoEl);
+
+    videoContainer.parentNode.removeChild(videoContainer);
+
+    // Destory peer connection
+    if (peers[socketId]) {
+      peers[socketId].destroy();
+    }
+
+    delete peers[socketId];
+  }
 };

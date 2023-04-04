@@ -50,6 +50,11 @@ export const connectWithSocketIOServer = () => {
     const { connUserSocketId } = data;
     webRTCHandler.prepareNewPeerConnection(connUserSocketId, true);
   });
+
+  // Listen for event that user disconnected
+  socket.on("user-disconnected", (data) => {
+    webRTCHandler.removePeerConnection(data);
+  });
 };
 
 // Funtion for creating a room
