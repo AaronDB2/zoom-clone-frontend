@@ -29,7 +29,6 @@ const SwitchToScreenSharingButton = () => {
 
         webRTCHandler.toggleScreenShare(isScreenSharingActive, stream);
         setIsScreenSharingActive(true);
-        // Execute function to switch the video track to screen sharing video track
       }
     } else {
       // switch to video track from camera
@@ -52,7 +51,7 @@ const SwitchToScreenSharingButton = () => {
         />
       </div>
       {isScreenSharingActive && (
-        <localScreenSharingPreview stream={screenSharingStream} />
+        <LocalScreenSharingPreview stream={screenSharingStream} />
       )}
     </>
   );
