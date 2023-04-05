@@ -146,7 +146,7 @@ export const removePeerConnection = (data) => {
     const tracks = videoEl.srcObject.getTracks();
 
     // Stop the video and audio tracks
-    tracks.forEach((t) => tracks.stop());
+    tracks.forEach((t) => t.stop());
 
     videoEl.srcObject = null;
     videoContainer.removeChild(videoEl);
@@ -160,4 +160,16 @@ export const removePeerConnection = (data) => {
 
     delete peers[socketId];
   }
+};
+
+//////////////////////// Button logic ///////////////////////////////////////////
+
+// Function for muting the mic on button click
+export const toggleMic = (isMuted) => {
+  localStream.getAudioTracks()[0].enabled = isMuted ? true : false;
+};
+
+// Function for disabling the video stream on button click
+export const toggleCamera = (isDisabled) => {
+  localStream.getVideoTracks()[0].enabled = isDisabled ? true : false;
 };

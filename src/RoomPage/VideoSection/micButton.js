@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import MicButtonImg from "../../resources/images/mic.svg";
 import MicButtonImgOff from "../../resources/images/micOff.svg";
+import * as webRTCHandler from "../../utils/webRTCHandler";
 
 const MicButton = () => {
   const [isMicMuted, setIsMicMuted] = useState(false);
 
   // Handler for when mic icon is pressed
   const handleMicButtonPressed = () => {
+    webRTCHandler.toggleMic(isMicMuted);
     setIsMicMuted(!isMicMuted);
   };
 
