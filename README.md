@@ -1,3 +1,14 @@
+This the frontend for the zoom clone. For the full functionality you also need to clone the zoom-clone-backend https://github.com/AaronDB2/zoom-clone-backend.
+
+To run this first use nmp install to install node modules. After that run npm start and dont forget to also start the backend server.
+
+
+
+
+
+
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template.
 
 ## Available Scripts
