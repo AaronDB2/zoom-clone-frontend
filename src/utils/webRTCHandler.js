@@ -1,92 +1,151 @@
-import { setShowOverlay } from "../store/actions";
+import { setShowOverlay, setMessages } from "../store/actions";
 import store from "../store/store";
 import * as wss from "./wss";
 import Peer from "simple-peer";
+import { fetchTURNCredentials, getTurnIceServers } from "./turn";
 
-// Set Constraints
 const defaultConstraints = {
   audio: true,
   video: {
-    with: "480",
+    width: "480",
     height: "360",
   },
 };
 
-var localStream;
-var peers = {};
-var streams = [];
+// Constraints when connecting only with audio
+const onlyAudioConstraints = {
+  audio: true,
+  video: false,
+};
 
-// Function for getting local stream and joining or hosting room
+var localStream;
+
 export const getLocalPreviewAndInitRoomConnection = async (
   isRoomHost,
   identity,
-  roomId = null
+  roomId = null,
+  onlyAudio
 ) => {
-  // Get mic and video access
+  await fetchTURNCredentials();
+
+  const constraints = onlyAudio ? onlyAudioConstraints : defaultConstraints;
+
   navigator.mediaDevices
-    .getUserMedia(defaultConstraints)
+    .getUserMedia(constraints)
     .then((stream) => {
-      console.log("successfully received local stream");
+      console.log("successfuly received local stream");
       localStream = stream;
       showLocalVideoPreview(localStream);
 
+      // dispatch an action to hide overlay
       store.dispatch(setShowOverlay(false));
-      // dispatch an action to hide loading overlay
-      isRoomHost ? wss.createNewRoom(identity) : wss.joinRoom(identity, roomId);
+
+      isRoomHost
+        ? wss.createNewRoom(identity, onlyAudio)
+        : wss.joinRoom(identity, roomId, onlyAudio);
     })
     .catch((err) => {
-      console.log("error occurred when trying to get access to localstream");
+      console.log(
+        "error occurred when trying to get an access to local stream"
+      );
       console.log(err);
     });
 };
 
-// Function for handeling signaling data
+var peers = {};
+var streams = [];
+
+// Function that returns the configuration for the peer
+const getConfiguration = () => {
+  const turnIceServers = getTurnIceServers();
+
+  if (turnIceServers) {
+    return {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+        ...turnIceServers,
+      ],
+    };
+  } else {
+    console.warn("Using only STUN server");
+    return {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    };
+  }
+};
+
+const messengerChannel = "messenger";
+
+// Function for initializing new Peer
+export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
+  const configuration = getConfiguration();
+
+  peers[connUserSocketId] = new Peer({
+    initiator: isInitiator,
+    config: configuration,
+    stream: localStream,
+    channelName: messengerChannel,
+  });
+
+  peers[connUserSocketId].on("signal", (data) => {
+    // webRTC offer, webRTC Answer (SDP informations), ice candidates
+
+    const signalData = {
+      signal: data,
+      connUserSocketId: connUserSocketId,
+    };
+
+    wss.signalPeerData(signalData);
+  });
+
+  peers[connUserSocketId].on("stream", (stream) => {
+    console.log("new stream came");
+
+    addStream(stream, connUserSocketId);
+    streams = [...streams, stream];
+  });
+
+  peers[connUserSocketId].on("data", (data) => {
+    const messageData = JSON.parse(data);
+    appendNewMessage(messageData);
+  });
+};
+
 export const handleSignalingData = (data) => {
-  // Add signaling data to peer connection
+  //add signaling data to peer connection
   peers[data.connUserSocketId].signal(data.signal);
 };
 
-// Function that returns the webRTC configuration for simple-peer
-const getConfiguration = () => {
-  return {
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-    ],
-  };
-};
+// Function that ends the peer connection
+export const removePeerConnection = (data) => {
+  const { socketId } = data;
+  const videoContainer = document.getElementById(socketId);
+  const videoEl = document.getElementById(`${socketId}-video`);
 
-// Function for displaying incoming stream
-const addStream = (stream, connUserSocketId) => {
-  const videosContainer = document.getElementById("videos_portal");
-  const videoContainer = document.createElement("div");
-  videoContainer.id = connUserSocketId;
+  if (videoContainer && videoEl) {
+    const tracks = videoEl.srcObject.getTracks();
 
-  videoContainer.classList.add("video_track_container");
-  const videoElement = document.createElement("video");
-  videoElement.autoplay = true;
-  videoElement.srcObject = stream;
-  videoElement.id = `${connUserSocketId}-video`;
+    tracks.forEach((t) => t.stop());
 
-  videoElement.onloadedmetadata = () => {
-    videoElement.play();
-  };
+    videoEl.srcObject = null;
+    videoContainer.removeChild(videoEl);
 
-  // Click event for fullscreen video element
-  videoElement.addEventListener("click", () => {
-    if (videoElement.classList.contains("full_screen")) {
-      videoElement.classList.remove("full_screen");
-    } else {
-      videoElement.classList.add("full_screen");
+    videoContainer.parentNode.removeChild(videoContainer);
+
+    if (peers[socketId]) {
+      peers[socketId].destroy();
     }
-  });
-
-  videoContainer.appendChild(videoElement);
-  videosContainer.appendChild(videoContainer);
+    delete peers[socketId];
+  }
 };
 
-// Function for showing local video preview
+////////////////////////////////// UI Videos //////////////////////////////////
 const showLocalVideoPreview = (stream) => {
   const videosContainer = document.getElementById("videos_portal");
   videosContainer.classList.add("videos_portal_styles");
@@ -102,79 +161,76 @@ const showLocalVideoPreview = (stream) => {
   };
 
   videoContainer.appendChild(videoElement);
+
+  if (store.getState().connectOnlyWithAudio) {
+    videoContainer.appendChild(getAudioOnlyLabel());
+  }
+
   videosContainer.appendChild(videoContainer);
 };
 
-// Function for preparing peer connection
-export const prepareNewPeerConnection = (connUserSocketId, isInitiator) => {
-  const configuration = getConfiguration();
+const addStream = (stream, connUserSocketId) => {
+  //display incoming stream
+  const videosContainer = document.getElementById("videos_portal");
+  const videoContainer = document.createElement("div");
+  videoContainer.id = connUserSocketId;
 
-  // Init new Peer
-  peers[connUserSocketId] = new Peer({
-    initiator: isInitiator,
-    config: configuration,
-    stream: localStream,
-  });
+  videoContainer.classList.add("video_track_container");
+  const videoElement = document.createElement("video");
+  videoElement.autoplay = true;
+  videoElement.srcObject = stream;
+  videoElement.id = `${connUserSocketId}-video`;
 
-  // Peer is listening for incoming signal
-  // Data for singaling: webRTC offer, webRTC Answer (SDP info), ice candidates
-  peers[connUserSocketId].on("signal", (data) => {
-    const signalData = {
-      signal: data,
-      connUserSocketId: connUserSocketId,
-    };
+  videoElement.onloadedmetadata = () => {
+    videoElement.play();
+  };
 
-    wss.signalPeerData(signalData);
-  });
-
-  // Peer is listening for incoming stream
-  peers[connUserSocketId].on("stream", (stream) => {
-    console.log("new stream came in");
-
-    addStream(stream, connUserSocketId);
-    streams = [...streams, stream];
-  });
-};
-
-// Function for disconnecting the peer connection
-export const removePeerConnection = (data) => {
-  const { socketId } = data;
-  const videoContainer = document.getElementById(socketId);
-  const videoEl = document.getElementById(`${socketId}-video`);
-
-  if (videoContainer && videoEl) {
-    const tracks = videoEl.srcObject.getTracks();
-
-    // Stop the video and audio tracks
-    tracks.forEach((t) => t.stop());
-
-    videoEl.srcObject = null;
-    videoContainer.removeChild(videoEl);
-
-    videoContainer.parentNode.removeChild(videoContainer);
-
-    // Destory peer connection
-    if (peers[socketId]) {
-      peers[socketId].destroy();
+  videoElement.addEventListener("click", () => {
+    if (videoElement.classList.contains("full_screen")) {
+      videoElement.classList.remove("full_screen");
+    } else {
+      videoElement.classList.add("full_screen");
     }
+  });
 
-    delete peers[socketId];
+  videoContainer.appendChild(videoElement);
+
+  // check if other user connected only with audio
+  const participants = store.getState().participants;
+
+  const participant = participants.find((p) => p.socketId === connUserSocketId);
+  console.log(participant);
+  if (participant?.onlyAudio) {
+    videoContainer.appendChild(getAudioOnlyLabel(participant.identity));
+  } else {
+    videoContainer.style.position = "static";
   }
+
+  videosContainer.appendChild(videoContainer);
 };
 
-//////////////////////// Button logic ///////////////////////////////////////////
+const getAudioOnlyLabel = (identity = "") => {
+  const labelContainer = document.createElement("div");
+  labelContainer.classList.add("label_only_audio_container");
 
-// Function for muting the mic on button click
+  const label = document.createElement("p");
+  label.classList.add("label_only_audio_text");
+  label.innerHTML = `Only audio ${identity}`;
+
+  labelContainer.appendChild(label);
+  return labelContainer;
+};
+
+////////////////////////////////// Buttons logic //////////////////////////////////
+
 export const toggleMic = (isMuted) => {
   localStream.getAudioTracks()[0].enabled = isMuted ? true : false;
 };
 
-// Function for disabling the video stream on button click
 export const toggleCamera = (isDisabled) => {
   localStream.getVideoTracks()[0].enabled = isDisabled ? true : false;
 };
 
-// Function for sending screenshare stream to peers
 export const toggleScreenShare = (
   isScreenSharingActive,
   screenSharingStream = null
@@ -186,7 +242,6 @@ export const toggleScreenShare = (
   }
 };
 
-// Function for switching video streams
 const switchVideoTracks = (stream) => {
   for (let socket_id in peers) {
     for (let index in peers[socket_id].streams[0].getTracks()) {
@@ -204,5 +259,34 @@ const switchVideoTracks = (stream) => {
         }
       }
     }
+  }
+};
+
+////////////////////////////////// Messages /////////////////////////////////////
+const appendNewMessage = (messageData) => {
+  const messages = store.getState().messages;
+  store.dispatch(setMessages([...messages, messageData]));
+};
+
+export const sendMessageUsingDataChannel = (messageContent) => {
+  // append this message locally
+  const identity = store.getState().identity;
+
+  const localMessageData = {
+    content: messageContent,
+    identity,
+    messageCreatedByMe: true,
+  };
+
+  appendNewMessage(localMessageData);
+
+  const messageData = {
+    content: messageContent,
+    identity,
+  };
+
+  const stringifiedMessageData = JSON.stringify(messageData);
+  for (let socketId in peers) {
+    peers[socketId].send(stringifiedMessageData);
   }
 };

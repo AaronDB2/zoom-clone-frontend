@@ -1,7 +1,6 @@
 import React from "react";
 
 const LeaveRoomButton = () => {
-  // Handler for when clicking leave room button
   const handleRoomDisconnection = () => {
     const siteUrl = window.location.origin;
     window.location.href = siteUrl;

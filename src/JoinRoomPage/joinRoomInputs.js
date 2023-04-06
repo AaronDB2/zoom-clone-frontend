@@ -11,7 +11,6 @@ const Input = ({ placeholder, value, changeHandler }) => {
   );
 };
 
-// Component for join room inputs
 const JoinRoomInputs = (props) => {
   const { roomIdValue, setRoomIdValue, nameValue, setNameValue, isRoomHost } =
     props;
@@ -23,6 +22,7 @@ const JoinRoomInputs = (props) => {
   const handleNameValueChange = (event) => {
     setNameValue(event.target.value);
   };
+
   return (
     <div className="join_room_inputs_container">
       {!isRoomHost && (

@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from "react";
 
-// Component for displaying screen share preview
 const LocalScreenSharingPreview = ({ stream }) => {
   const localPreviewRef = useRef();
 

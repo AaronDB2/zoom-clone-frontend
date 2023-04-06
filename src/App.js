@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import JoinRoomPage from "./JoinRoomPage/joinRoomPage";
-import RoomPage from "./RoomPage/roomPage";
-import IntroductionPage from "./IntroductionPage/introductionPage";
+import IntroductionPage from "./IntroductionPage/IntroductionPage";
+import JoinRoomPage from "./JoinRoomPage/JoinRoomPage";
+import RoomPage from "./RoomPage/RoomPage";
 import { connectWithSocketIOServer } from "./utils/wss";
 
 import "./App.css";

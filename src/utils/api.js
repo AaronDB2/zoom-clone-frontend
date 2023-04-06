@@ -1,10 +1,16 @@
 import axios from "axios";
 
-// Address of the server
-const serverApi = "http://localhost:3001/api";
+// Server address
+const serverApi = "http://localhost:5002/api";
 
-// Function for checking if room exists
+// Get room from server
 export const getRoomExists = async (roomId) => {
   const response = await axios.get(`${serverApi}/room-exists/${roomId}`);
+  return response.data;
+};
+
+// Get TURN server crendentials
+export const getTURNCredentials = async () => {
+  const response = await axios.get(`${serverApi}/get-turn-credentials`);
   return response.data;
 };

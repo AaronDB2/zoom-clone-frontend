@@ -1,17 +1,14 @@
 import React from "react";
-import ConnectingButton from "./connectingButton";
+import ConnectingButton from "./ConnectingButton";
 import { useHistory } from "react-router-dom";
 
-// Component for button container
 const ConnectingButtons = () => {
-  var history = useHistory();
+  let history = useHistory();
 
-  // Handler for joining a room
   const pushToJoinRoomPage = () => {
     history.push("/join-room");
   };
 
-  // Handler for joining a room as host
   const pushToJoinRoomPageAsHost = () => {
     history.push("/join-room?host=true");
   };
@@ -23,7 +20,7 @@ const ConnectingButtons = () => {
         onClickHandler={pushToJoinRoomPage}
       />
       <ConnectingButton
-        createRoomButton={true}
+        createRoomButton
         buttonText="Host a meeting"
         onClickHandler={pushToJoinRoomPageAsHost}
       />

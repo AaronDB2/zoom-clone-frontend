@@ -1,5 +1,5 @@
 import React from "react";
-import VideoButtons from "./videoButtons";
+import VideoButtons from "./VideoButtons";
 
 const VideoSection = () => {
   return (

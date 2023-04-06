@@ -1,84 +1,84 @@
 import io from "socket.io-client";
+import { setRoomId, setParticipants, setSocketId } from "../store/actions";
 import store from "../store/store";
-import { setRoomId, setParticipants } from "../store/actions";
 import * as webRTCHandler from "./webRTCHandler";
+import { appendNewMessageToChatHistory } from "./directMessages";
 
-// Address of the server
-const SERVER = "http://localhost:3001";
+const SERVER = "http://localhost:5002";
 
 let socket = null;
 
 export const connectWithSocketIOServer = () => {
-  // Connect to the server with socket io
   socket = io(SERVER);
 
-  // Listen for connections to socket io server
   socket.on("connect", () => {
     console.log("successfully connected with socket io server");
     console.log(socket.id);
+    store.dispatch(setSocketId(socket.id));
   });
 
-  // Listen for event tha gives room id
   socket.on("room-id", (data) => {
     const { roomId } = data;
     store.dispatch(setRoomId(roomId));
   });
 
-  // Listen for event that updates the room
   socket.on("room-update", (data) => {
     const { connectedUsers } = data;
     store.dispatch(setParticipants(connectedUsers));
   });
 
-  // Listen for event that signals to prepare for connection between clients
   socket.on("conn-prepare", (data) => {
     const { connUserSocketId } = data;
 
     webRTCHandler.prepareNewPeerConnection(connUserSocketId, false);
 
-    // inform the user which just joined the room that we prepared for incoming connection
+    // inform the user which just join the room that we have prepared for incoming connection
     socket.emit("conn-init", { connUserSocketId: connUserSocketId });
   });
 
-  // Listen for event that provides signaling data
   socket.on("conn-signal", (data) => {
     webRTCHandler.handleSignalingData(data);
   });
 
-  // Listen for event that initialize connection between peers
   socket.on("conn-init", (data) => {
     const { connUserSocketId } = data;
     webRTCHandler.prepareNewPeerConnection(connUserSocketId, true);
   });
 
-  // Listen for event that user disconnected
   socket.on("user-disconnected", (data) => {
     webRTCHandler.removePeerConnection(data);
   });
+
+  socket.on("direct-message", (data) => {
+    appendNewMessageToChatHistory(data);
+  });
 };
 
-// Funtion for creating a room
-export const createNewRoom = (identity) => {
+export const createNewRoom = (identity, onlyAudio) => {
+  // emit an event to server that we would like to create new room
   const data = {
     identity,
+    onlyAudio,
   };
 
-  // Emit event for creating a new room to the server
   socket.emit("create-new-room", data);
 };
 
-// Funtion for joining a room
-export const joinRoom = (identity, roomId) => {
+export const joinRoom = (identity, roomId, onlyAudio) => {
+  //emit an event to server that we would to join a room
   const data = {
     roomId,
     identity,
+    onlyAudio,
   };
 
-  // Emit event for creating a new room to the server
   socket.emit("join-room", data);
 };
 
-// Function for sending signal data
 export const signalPeerData = (data) => {
   socket.emit("conn-signal", data);
+};
+
+export const sendDirectMessage = (data) => {
+  socket.emit("direct-message", data);
 };

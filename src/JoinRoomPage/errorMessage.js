@@ -1,6 +1,5 @@
 import React from "react";
 
-// Component for displaying error messages
 const ErrorMessage = ({ errorMessage }) => {
   return (
     <div className="error_message_container">

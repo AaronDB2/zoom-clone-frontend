@@ -1,21 +1,33 @@
 import React, { useEffect } from "react";
-import ParticipantsSection from "./ParticipantsSection/participantsSection";
-import VideoSection from "./VideoSection/videoSection";
-import ChatSection from "./ChatSection/chatSection";
-import RoomLabel from "./roomLabel";
+import ChatSection from "./ChatSection/ChatSection";
+import ParticipantsSection from "./ParticipantsSection/ParticipantsSection";
+import VideoSection from "./VideoSection/VideoSection";
+import RoomLabel from "./RoomLabel";
 import { connect } from "react-redux";
 import * as webRTCHandler from "../utils/webRTCHandler";
-import Overlay from "./overlay";
+import Overlay from "./Overlay";
 
-import "./roomPage.css";
+import "./RoomPage.css";
 
-const RoomPage = ({ roomId, identity, isRoomHost, showOverlay }) => {
+const RoomPage = ({
+  roomId,
+  identity,
+  isRoomHost,
+  showOverlay,
+  connectOnlyWithAudio,
+}) => {
   useEffect(() => {
-    webRTCHandler.getLocalPreviewAndInitRoomConnection(
-      isRoomHost,
-      identity,
-      roomId
-    );
+    if (!isRoomHost && !roomId) {
+      const siteUrl = window.location.origin;
+      window.location.href = siteUrl;
+    } else {
+      webRTCHandler.getLocalPreviewAndInitRoomConnection(
+        isRoomHost,
+        identity,
+        roomId,
+        connectOnlyWithAudio
+      );
+    }
   }, []);
 
   return (

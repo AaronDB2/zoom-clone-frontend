@@ -6,9 +6,9 @@ import * as webRTCHandler from "../../utils/webRTCHandler";
 const MicButton = () => {
   const [isMicMuted, setIsMicMuted] = useState(false);
 
-  // Handler for when mic icon is pressed
   const handleMicButtonPressed = () => {
     webRTCHandler.toggleMic(isMicMuted);
+
     setIsMicMuted(!isMicMuted);
   };
 

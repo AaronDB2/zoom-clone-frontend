@@ -1,15 +1,14 @@
 import React from "react";
 import CheckImg from "../resources/images/check.png";
 
-// Component for only with audio checkbox
-const OnlyWidthAudioCheckbox = ({
+const OnlyWithAudioCheckbox = ({
   connectOnlyWithAudio,
   setConnectOnlyWithAudio,
 }) => {
-  // Handler for changing info in store about connection type
   const handleConnectionTypeChange = () => {
     setConnectOnlyWithAudio(!connectOnlyWithAudio);
   };
+
   return (
     <div className="checkbox_container">
       <div className="checkbox_connection" onClick={handleConnectionTypeChange}>
@@ -17,9 +16,9 @@ const OnlyWidthAudioCheckbox = ({
           <img className="checkbox_image" src={CheckImg}></img>
         )}
       </div>
-      <p className="checkbox_container_paragraph">Only Audio</p>
+      <p className="checkbox_container_paragraph">Only audio</p>
     </div>
   );
 };
 
-export default OnlyWidthAudioCheckbox;
+export default OnlyWithAudioCheckbox;

@@ -1,7 +1,6 @@
 import React from "react";
 import { useHistory } from "react-router-dom";
 
-// Button component
 const Button = ({ buttonText, cancelButton = false, onClickHandler }) => {
   const buttonClass = cancelButton
     ? "join_room_cancel_button"
@@ -14,7 +13,6 @@ const Button = ({ buttonText, cancelButton = false, onClickHandler }) => {
   );
 };
 
-// Component for join room buttons
 const JoinRoomButtons = ({ handleJoinRoom, isRoomHost }) => {
   const successButtonText = isRoomHost ? "Host" : "Join";
 

@@ -1,18 +1,17 @@
 import React, { useState } from "react";
-import JoinRoomInputs from "./joinRoomInputs";
+import JoinRoomInputs from "./JoinRoomInputs";
 import { connect } from "react-redux";
-import OnlyWidthAudioCheckbox from "./onlyWithAudioCheckbox";
+import OnlyWithAudioCheckbox from "./OnlyWithAudioCheckbox";
 import {
   setConnectOnlyWithAudio,
   setIdentity,
   setRoomId,
 } from "../store/actions";
-import ErrorMessage from "./errorMessage";
-import JoinRoomButtons from "./joinRoomButtons";
+import ErrorMessage from "./ErrorMessage";
+import JoinRoomButtons from "./JoinRoomButtons";
 import { useHistory } from "react-router-dom";
 import { getRoomExists } from "../utils/api";
 
-// Component for join room content
 const JoinRoomContent = (props) => {
   const {
     isRoomHost,
@@ -37,28 +36,24 @@ const JoinRoomContent = (props) => {
     }
   };
 
-  // Function for joining a room
   const joinRoom = async () => {
-    // Check if room exists with given room ID
     const responseMessage = await getRoomExists(roomIdValue);
 
     const { roomExists, full } = responseMessage;
-    // Check if room exists
+
     if (roomExists) {
-      // Check if room is full
       if (full) {
-        setErrorMessage("Meeting is full. Please try again later");
+        setErrorMessage("Meeting is full. Please try again later.");
       } else {
-        // Save in redux store meeting id
+        // join a room !
         setRoomIdAction(roomIdValue);
         history.push("/room");
       }
     } else {
-      setErrorMessage("Room not found. Check your meeting id");
+      setErrorMessage("Meeting not found. Check your meeting id.");
     }
   };
 
-  // Function for creating a room
   const createRoom = () => {
     history.push("/room");
   };
@@ -72,7 +67,7 @@ const JoinRoomContent = (props) => {
         setNameValue={setNameValue}
         isRoomHost={isRoomHost}
       />
-      <OnlyWidthAudioCheckbox
+      <OnlyWithAudioCheckbox
         setConnectOnlyWithAudio={setConnectOnlyWithAudio}
         connectOnlyWithAudio={connectOnlyWithAudio}
       />
