@@ -1,6 +1,6 @@
 This the frontend for the zoom clone. For the full functionality you also need to clone the zoom-clone-backend https://github.com/AaronDB2/zoom-clone-backend.
 
-To run this first use nmp install to install node modules. After that run npm start and dont forget to also start the backend server.
+To run this first use npm install to install node modules. After that run npm start and dont forget to also start the backend server.
 
 
 
